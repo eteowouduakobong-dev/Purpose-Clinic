@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  name            String?
+  avatarUrl       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  purposeProfile  PurposeProfile?
+  lifeAudits      LifeAudit[]
+  coreValues      CoreValue[]
+  superpowers     SuperpowerMap?
+  ikigaiEntry     IkigaiEntry?
+  manifesto       PurposeManifesto?
+  milestones      ActionMilestone[]
+  dailyCheckIns   DailyCheckIn[]
+}
+
+model PurposeProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStage     Int      @default(1) // 1: Audit, 2: Values, 3: Passions, 4: Ikigai, 5: Manifesto, 6: Action
+  stagesCompleted  Int[]    @default([])
+  initialClarity   Int      @default(3) // 1-10
+  currentClarity   Int      @default(3) // 1-10
+  purposeStatement String?
+  lifeTheme        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model LifeAudit {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerScore      Int      @default(5) // 1-10
+  healthScore      Int      @default(5)
+  relationshipScore Int     @default(5)
+  growthScore      Int      @default(5)
+  creativityScore  Int      @default(5)
+  financeScore     Int      @default(5)
+  environmentScore Int      @default(5)
+  spiritualScore   Int      @default(5)
+  topFriction      String?
+  energyLeaks      String?
+  topPriority      String?
+  auditNotes       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model CoreValue {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  valueName          String
+  rank               Int      @default(1)
+  personalDefinition String?
+  actionExample      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model SuperpowerMap {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  naturalTalents  String[] @default([])
+  flowActivities  String[] @default([])
+  childhoodPassions String[] @default([])
+  energyGivers    String[] @default([])
+  energyDrainers  String[] @default([])
+  proudestMoments String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model IkigaiEntry {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  whatYouLove     String[] @default([]) // Passion & Mission
+  whatYouAreGoodAt String[] @default([]) // Passion & Profession
+  whatWorldNeeds  String[] @default([]) // Mission & Vocation
+  whatYouCanGetPaidFor String[] @default([]) // Profession & Vocation
+  passionTheme    String?
+  missionTheme    String?
+  professionTheme String?
+  vocationTheme   String?
+  ikigaiSynthesis String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PurposeManifesto {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline          String   // e.g. "To illuminate human potential through storytelling"
+  fullStatement     String
+  whoIServe         String
+  whatITransform    String
+  guidingPrinciples String[] @default([])
+  dailyDeclaration  String?
+  isPublic          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ActionMilestone {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  timeframe       String   // "30_DAYS", "90_DAYS", "1_YEAR"
+  status          String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  alignmentReason String?
+  dueDate         DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model DailyCheckIn {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              String   // YYYY-MM-DD
+  morningIntention  String?
+  eveningReflection String?
+  alignmentScore    Int      @default(5) // 1-10
+  energyLevel       Int      @default(5) // 1-10
+  clarityScore      Int      @default(5) // 1-10
+  gratitude         String?
+  mood              String?  // peaceful, inspired, uncertain, restless, grounded
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+}
